@@ -30,12 +30,12 @@
 
 #include "text_shader_editor.h"
 
+#include "core/config/project_settings.h"
 #include "core/version_generated.gen.h"
+#include "editor/editor_file_system.h"
 #include "editor/editor_node.h"
 #include "editor/editor_settings.h"
 #include "editor/editor_string_names.h"
-#include "editor/filesystem_dock.h"
-#include "editor/project_settings_editor.h"
 #include "editor/themes/editor_scale.h"
 #include "editor/themes/editor_theme_manager.h"
 #include "scene/gui/split_container.h"
@@ -49,6 +49,11 @@ Dictionary GDShaderSyntaxHighlighter::_get_line_syntax_highlighting_impl(int p_l
 
 	for (const Point2i &region : disabled_branch_regions) {
 		if (p_line >= region.x && p_line <= region.y) {
+			// When "color_regions[0].p_start_key.length() > 2",
+			// disabled_branch_region causes color_region to break.
+			// This should be seen as a temporary solution.
+			CodeHighlighter::_get_line_syntax_highlighting_impl(p_line);
+
 			Dictionary highlighter_info;
 			highlighter_info["color"] = disabled_branch_color;
 
@@ -313,6 +318,8 @@ void ShaderTextEditor::_load_theme_settings() {
 
 	const Color doc_comment_color = EDITOR_GET("text_editor/theme/highlighting/doc_comment_color");
 	syntax_highlighter->add_color_region("/**", "*/", doc_comment_color, false);
+	// "/**/" will be treated as the start of the "/**" region, this line is guaranteed to end the color_region.
+	syntax_highlighter->add_color_region("/**/", "", comment_color, true);
 
 	// Disabled preprocessor branches use translucent text color to be easier to distinguish from comments.
 	syntax_highlighter->set_disabled_branch_color(Color(EDITOR_GET("text_editor/theme/highlighting/text_color")) * Color(1, 1, 1, 0.5));
@@ -436,7 +443,7 @@ void ShaderTextEditor::_code_complete_script(const String &p_code, List<ScriptLa
 }
 
 void ShaderTextEditor::_validate_script() {
-	emit_signal(SNAME("script_changed")); // Ensure to notify that it changed, so it is applied
+	emit_signal(CoreStringName(script_changed)); // Ensure to notify that it changed, so it is applied
 
 	String code;
 
@@ -726,6 +733,13 @@ void TextShaderEditor::_menu_option(int p_option) {
 	if (p_option != SEARCH_FIND && p_option != SEARCH_REPLACE && p_option != SEARCH_GOTO_LINE) {
 		callable_mp((Control *)code_editor->get_text_editor(), &Control::grab_focus).call_deferred();
 	}
+}
+
+void TextShaderEditor::_prepare_edit_menu() {
+	const CodeEdit *tx = code_editor->get_text_editor();
+	PopupMenu *popup = edit_menu->get_popup();
+	popup->set_item_disabled(popup->get_item_index(EDIT_UNDO), !tx->has_undo());
+	popup->set_item_disabled(popup->get_item_index(EDIT_REDO), !tx->has_redo());
 }
 
 void TextShaderEditor::_notification(int p_what) {
@@ -1081,6 +1095,9 @@ void TextShaderEditor::_make_context_menu(bool p_selection, Vector2 p_position) 
 	context_menu->add_shortcut(ED_GET_SHORTCUT("script_text_editor/toggle_comment"), EDIT_TOGGLE_COMMENT);
 	context_menu->add_shortcut(ED_GET_SHORTCUT("script_text_editor/toggle_bookmark"), BOOKMARK_TOGGLE);
 
+	context_menu->set_item_disabled(context_menu->get_item_index(EDIT_UNDO), !code_editor->get_text_editor()->has_undo());
+	context_menu->set_item_disabled(context_menu->get_item_index(EDIT_REDO), !code_editor->get_text_editor()->has_redo());
+
 	context_menu->set_position(get_screen_position() + p_position);
 	context_menu->reset_size();
 	context_menu->popup();
@@ -1098,7 +1115,7 @@ TextShaderEditor::TextShaderEditor() {
 	code_editor->set_anchors_and_offsets_preset(Control::PRESET_FULL_RECT);
 
 	code_editor->connect("show_warnings_panel", callable_mp(this, &TextShaderEditor::_show_warnings_panel));
-	code_editor->connect("script_changed", callable_mp(this, &TextShaderEditor::apply_shaders));
+	code_editor->connect(CoreStringName(script_changed), callable_mp(this, &TextShaderEditor::apply_shaders));
 	EditorSettings::get_singleton()->connect("settings_changed", callable_mp(this, &TextShaderEditor::_editor_settings_changed));
 	ProjectSettings::get_singleton()->connect("settings_changed", callable_mp(this, &TextShaderEditor::_project_settings_changed));
 
@@ -1106,7 +1123,7 @@ TextShaderEditor::TextShaderEditor() {
 	code_editor->get_text_editor()->set_context_menu_enabled(false);
 	code_editor->get_text_editor()->set_draw_breakpoints_gutter(false);
 	code_editor->get_text_editor()->set_draw_executing_lines_gutter(false);
-	code_editor->get_text_editor()->connect("gui_input", callable_mp(this, &TextShaderEditor::_text_edit_gui_input));
+	code_editor->get_text_editor()->connect(SceneStringName(gui_input), callable_mp(this, &TextShaderEditor::_text_edit_gui_input));
 
 	code_editor->update_editor_settings();
 
@@ -1121,6 +1138,7 @@ TextShaderEditor::TextShaderEditor() {
 	edit_menu->set_shortcut_context(this);
 	edit_menu->set_text(TTR("Edit"));
 	edit_menu->set_switch_on_hover(true);
+	edit_menu->connect("about_to_popup", callable_mp(this, &TextShaderEditor::_prepare_edit_menu));
 
 	edit_menu->get_popup()->add_shortcut(ED_GET_SHORTCUT("ui_undo"), EDIT_UNDO);
 	edit_menu->get_popup()->add_shortcut(ED_GET_SHORTCUT("ui_redo"), EDIT_REDO);
