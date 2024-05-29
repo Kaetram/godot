@@ -1,3 +1,7 @@
+# Build the editor.
+scons platform=windows
+
+# Build the export templates for Windows.
 scons platform=windows target=template_debug arch=x86_32 tools=no build_feature_profile="kaetram.build"
 scons platform=windows target=template_release arch=x86_32 tools=no build_feature_profile="kaetram.build"
 scons platform=windows target=template_debug arch=x86_64 tools=no build_feature_profile="kaetram.build"
@@ -26,3 +30,20 @@ mv bin/windows_debug_x86_64_console.exe bin/templates_windows/windows_debug_x86_
 mv bin/windows_debug_x86_64.exe bin/templates_windows/windows_debug_x86_64.exe
 mv bin/windows_release_x86_64_console.exe bin/templates_windows/windows_release_x86_64_console.exe
 mv bin/windows_release_x86_64.exe bin/templates_windows/windows_release_x86_64.exe
+
+# Compile the Android build templates.
+scons platform=android arch=arm32 target=template_debug build_feature_profile="kaetram.build"
+scons platform=android arch=arm64 target=template_debug build_feature_profile="kaetram.build"
+scons platform=android arch=x86_32 target=template_debug build_feature_profile="kaetram.build"
+scons platform=android arch=x86_64 target=template_debug build_feature_profile="kaetram.build"
+
+scons platform=android arch=arm32 target=template_release build_feature_profile="kaetram.build"
+scons platform=android arch=arm64 target=template_release build_feature_profile="kaetram.build"
+scons platform=android arch=x86_32 target=template_release build_feature_profile="kaetram.build"
+scons platform=android arch=x86_64 target=template_release build_feature_profile="kaetram.build"
+
+# Compile via Gradle.
+cd platform/android/java
+
+./gradlew clean
+./gradlew generateGodotTemplates

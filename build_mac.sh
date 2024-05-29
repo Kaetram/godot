@@ -5,8 +5,8 @@ scons platform=ios target=template_release tools=no build_feature_profile="kaetr
 # scons platform=ios target=template_release tools=no build_feature_profile="kaetram.build" arch=x86_64
 scons platform=ios target=template_debug tools=no build_feature_profile="kaetram.build" ios_simulator=yes arch=arm64
 scons platform=ios target=template_release tools=no build_feature_profile="kaetram.build" ios_simulator=yes arch=arm64
-scons platform=ios target=template_debug tools=no build_feature_profile="kaetram.build" ios_simulator=yes arch=x86_64
-scons platform=ios target=template_release tools=no build_feature_profile="kaetram.build" ios_simulator=yes arch=x86_64
+# scons platform=ios target=template_debug tools=no build_feature_profile="kaetram.build" ios_simulator=yes arch=x86_64
+# scons platform=ios target=template_release tools=no build_feature_profile="kaetram.build" ios_simulator=yes arch=x86_64
 
 # Create simulator libraries.
 cp -r misc/dist/ios_xcode ./bin
