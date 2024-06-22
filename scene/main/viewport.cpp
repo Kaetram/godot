@@ -1435,7 +1435,7 @@ void Viewport::_gui_show_tooltip() {
 	Control *tooltip_owner = nullptr;
 	gui.tooltip_text = _gui_get_tooltip(
 			gui.tooltip_control,
-			gui.tooltip_control->get_global_transform().xform_inv(gui.last_mouse_pos),
+			gui.tooltip_control->get_global_transform_with_canvas().affine_inverse().xform(gui.last_mouse_pos),
 			&tooltip_owner);
 	gui.tooltip_text = gui.tooltip_text.strip_edges();
 
@@ -1915,7 +1915,7 @@ void Viewport::_gui_input_event(Ref<InputEvent> p_event) {
 
 				if (gui.tooltip_popup) {
 					if (gui.tooltip_control) {
-						String tooltip = _gui_get_tooltip(over, gui.tooltip_control->get_global_transform().xform_inv(mpos));
+						String tooltip = _gui_get_tooltip(over, gui.tooltip_control->get_global_transform_with_canvas().affine_inverse().xform(mpos));
 						tooltip = tooltip.strip_edges();
 
 						if (tooltip.is_empty() || tooltip != gui.tooltip_text) {
@@ -4256,8 +4256,7 @@ bool Viewport::_camera_3d_add(Camera3D *p_camera) {
 void Viewport::_camera_3d_remove(Camera3D *p_camera) {
 	camera_3d_set.erase(p_camera);
 	if (camera_3d == p_camera) {
-		camera_3d->notification(Camera3D::NOTIFICATION_LOST_CURRENT);
-		camera_3d = nullptr;
+		_camera_3d_set(nullptr);
 	}
 }
 
