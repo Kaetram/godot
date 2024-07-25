@@ -329,9 +329,9 @@ bool ProjectSettings::_set(const StringName &p_name, const Variant &p_value) {
 			String path = p_value;
 			if (path.begins_with("*")) {
 				autoload.is_singleton = true;
-				autoload.path = path.substr(1);
+				autoload.path = path.substr(1).simplify_path();
 			} else {
-				autoload.path = path;
+				autoload.path = path.simplify_path();
 			}
 			add_autoload(autoload);
 		} else if (p_name.operator String().begins_with("global_group/")) {
@@ -1491,7 +1491,7 @@ ProjectSettings::ProjectSettings() {
 
 	PackedStringArray extensions;
 	extensions.push_back("gd");
-	if (Engine::get_singleton()->has_singleton("GodotSharp")) {
+	if (ClassDB::class_exists("CSharpScript")) {
 		extensions.push_back("cs");
 	}
 	extensions.push_back("gdshader");
