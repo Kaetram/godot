@@ -1516,6 +1516,7 @@ void Viewport::_gui_show_tooltip() {
 		r.size *= win_scale;
 		vr = window->get_usable_parent_rect();
 	}
+	r.size = r.size.ceil();
 	r.size = r.size.min(panel->get_max_size());
 
 	if (r.size.x + r.position.x > vr.size.x + vr.position.x) {
@@ -5030,6 +5031,13 @@ Viewport::Viewport() {
 #endif // _3D_DISABLED
 
 	set_sdf_oversize(sdf_oversize); // Set to server.
+
+	// Physics interpolation mode for viewports is a special case.
+	// Typically viewports will be housed within Controls,
+	// and Controls default to PHYSICS_INTERPOLATION_MODE_OFF.
+	// Viewports can thus inherit physics interpolation OFF, which is unexpected.
+	// Setting to ON allows each viewport to have a fresh interpolation state.
+	set_physics_interpolation_mode(Node::PHYSICS_INTERPOLATION_MODE_ON);
 }
 
 Viewport::~Viewport() {
@@ -5068,6 +5076,7 @@ void SubViewport::_internal_set_size(const Size2i &p_size, bool p_force) {
 
 	if (c) {
 		c->update_minimum_size();
+		c->queue_redraw();
 	}
 }
 
