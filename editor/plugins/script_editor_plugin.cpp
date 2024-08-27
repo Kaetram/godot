@@ -2711,9 +2711,11 @@ void ScriptEditor::apply_scripts() const {
 }
 
 void ScriptEditor::reload_scripts(bool p_refresh_only) {
-	if (external_editor_active) {
-		return;
-	}
+	// Call deferred to make sure it runs on the main thread.
+	callable_mp(this, &ScriptEditor::_reload_scripts).call_deferred(p_refresh_only);
+}
+
+void ScriptEditor::_reload_scripts(bool p_refresh_only) {
 	for (int i = 0; i < tab_container->get_tab_count(); i++) {
 		ScriptEditorBase *se = Object::cast_to<ScriptEditorBase>(tab_container->get_tab_control(i));
 		if (!se) {
@@ -4415,13 +4417,9 @@ bool ScriptEditorPlugin::handles(Object *p_object) const {
 void ScriptEditorPlugin::make_visible(bool p_visible) {
 	if (p_visible) {
 		window_wrapper->show();
-		script_editor->set_process(true);
 		script_editor->ensure_select_current();
 	} else {
 		window_wrapper->hide();
-		if (!window_wrapper->get_window_enabled()) {
-			script_editor->set_process(false);
-		}
 	}
 }
 

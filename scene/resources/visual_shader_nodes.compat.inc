@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  FileErrors.kt                                                         */
+/*  visual_shader_nodes.compat.inc                                        */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,26 +28,36 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-package org.godotengine.godot.io.file
+#ifndef DISABLE_DEPRECATED
 
-/**
- * Set of errors that may occur when performing data access.
- */
-internal enum class FileErrors(val nativeValue: Int) {
-	OK(0),
-	FAILED(-1),
-	FILE_NOT_FOUND(-2),
-	FILE_CANT_OPEN(-3),
-	INVALID_PARAMETER(-4);
+// VisualShaderNodeCubemap
 
-	companion object {
-		fun fromNativeError(error: Int): FileErrors? {
-			for (fileError in entries) {
-				if (fileError.nativeValue == error) {
-					return fileError
-				}
-			}
-			return null
-		}
-	}
+void VisualShaderNodeCubemap::_set_cube_map_bind_compat_95126(Ref<Cubemap> p_cube_map) {
+	set_cube_map(p_cube_map);
 }
+
+Ref<Cubemap> VisualShaderNodeCubemap::_get_cube_map_bind_compat_95126() const {
+	return cube_map;
+}
+
+void VisualShaderNodeCubemap::_bind_compatibility_methods() {
+	ClassDB::bind_compatibility_method(D_METHOD("set_cube_map", "value"), &VisualShaderNodeCubemap::_set_cube_map_bind_compat_95126);
+	ClassDB::bind_compatibility_method(D_METHOD("get_cube_map"), &VisualShaderNodeCubemap::_get_cube_map_bind_compat_95126);
+}
+
+// VisualShaderNodeTexture2DArray
+
+void VisualShaderNodeTexture2DArray::_set_texture_array_bind_compat_95126(Ref<Texture2DArray> p_texture_array) {
+	set_texture_array(p_texture_array);
+}
+
+Ref<Texture2DArray> VisualShaderNodeTexture2DArray::_get_texture_array_bind_compat_95126() const {
+	return texture_array;
+}
+
+void VisualShaderNodeTexture2DArray::_bind_compatibility_methods() {
+	ClassDB::bind_compatibility_method(D_METHOD("set_texture_array", "value"), &VisualShaderNodeTexture2DArray::_set_texture_array_bind_compat_95126);
+	ClassDB::bind_compatibility_method(D_METHOD("get_texture_array"), &VisualShaderNodeTexture2DArray::_get_texture_array_bind_compat_95126);
+}
+
+#endif // DISABLE_DEPRECATED
