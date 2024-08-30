@@ -343,10 +343,17 @@ void ResourceLoader::_run_load_task(void *p_userdata) {
 
 	bool xl_remapped = false;
 	const String &remapped_path = _path_remap(load_task.local_path, &xl_remapped);
+
+	print_verbose("Loading resource: " + remapped_path);
+
 	Error load_err = OK;
 	Ref<Resource> res = _load(remapped_path, remapped_path != load_task.local_path ? load_task.local_path : String(), load_task.type_hint, load_task.cache_mode, &load_err, load_task.use_sub_threads, &load_task.progress);
 	if (MessageQueue::get_singleton() != MessageQueue::get_main_singleton()) {
 		MessageQueue::get_singleton()->flush();
+	}
+
+	if (res.is_null()) {
+		print_verbose("Failed loading resource: " + remapped_path);
 	}
 
 	thread_load_mutex.lock();
@@ -532,6 +539,11 @@ Ref<ResourceLoader::LoadToken> ResourceLoader::_load_start(const String &p_path,
 		if (!ignoring_cache && thread_load_tasks.has(local_path)) {
 			load_token = Ref<LoadToken>(thread_load_tasks[local_path].load_token);
 			if (load_token.is_valid()) {
+				if (p_for_user) {
+					// Load task exists, with no user tokens at the moment.
+					// Let's "attach" to it.
+					_load_threaded_request_setup_user_token(load_token.ptr(), p_path);
+				}
 				return load_token;
 			} else {
 				// The token is dying (reached 0 on another thread).
