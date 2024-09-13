@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  object.compat.inc                                                     */
+/*  GodotEditor.kt                                                        */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,13 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#ifndef DISABLE_DEPRECATED
+package org.godotengine.editor
 
-#include "core/object/class_db.h"
-
-void Object::_bind_compatibility_methods() {
-	ClassDB::bind_compatibility_method(D_METHOD("tr", "message", "context"), &Object::tr, DEFVAL(""));
-	ClassDB::bind_compatibility_method(D_METHOD("tr_n", "message", "plural_message", "n", "context"), &Object::tr_n, DEFVAL(""));
+/**
+ * Primary window of the Godot Editor.
+ *
+ * This is the implementation of the editor used when running on regular Android devices.
+ */
+open class GodotEditor : BaseGodotEditor() {
 }
-
-#endif

@@ -86,6 +86,7 @@ enum PropertyHint {
 	PROPERTY_HINT_HIDE_QUATERNION_EDIT, /// Only Node3D::transform should hide the quaternion editor.
 	PROPERTY_HINT_PASSWORD,
 	PROPERTY_HINT_LAYERS_AVOIDANCE,
+	PROPERTY_HINT_DICTIONARY_TYPE,
 	PROPERTY_HINT_MAX,
 };
 
@@ -667,7 +668,7 @@ protected:
 	_FORCE_INLINE_ bool _instance_binding_reference(bool p_reference) {
 		bool can_die = true;
 		if (_instance_bindings) {
-			_instance_binding_mutex.lock();
+			MutexLock instance_binding_lock(_instance_binding_mutex);
 			for (uint32_t i = 0; i < _instance_binding_count; i++) {
 				if (_instance_bindings[i].reference_callback) {
 					if (!_instance_bindings[i].reference_callback(_instance_bindings[i].token, _instance_bindings[i].binding, p_reference)) {
@@ -675,7 +676,6 @@ protected:
 					}
 				}
 			}
-			_instance_binding_mutex.unlock();
 		}
 		return can_die;
 	}
@@ -693,11 +693,7 @@ protected:
 	virtual void _notificationv(int p_notification, bool p_reversed) {}
 
 	static void _bind_methods();
-#ifndef DISABLE_DEPRECATED
-	static void _bind_compatibility_methods();
-#else
 	static void _bind_compatibility_methods() {}
-#endif
 	bool _set(const StringName &p_name, const Variant &p_property) { return false; };
 	bool _get(const StringName &p_name, Variant &r_property) const { return false; };
 	void _get_property_list(List<PropertyInfo> *p_list) const {};
@@ -868,7 +864,8 @@ public:
 			argptrs[i] = &args[i];
 		}
 		Callable::CallError cerr;
-		return callp(p_method, sizeof...(p_args) == 0 ? nullptr : (const Variant **)argptrs, sizeof...(p_args), cerr);
+		const Variant ret = callp(p_method, sizeof...(p_args) == 0 ? nullptr : (const Variant **)argptrs, sizeof...(p_args), cerr);
+		return (cerr.error == Callable::CallError::CALL_OK) ? ret : Variant();
 	}
 
 	void notification(int p_notification, bool p_reversed = false);
@@ -895,6 +892,7 @@ public:
 	MTVIRTUAL void remove_meta(const StringName &p_name);
 	MTVIRTUAL Variant get_meta(const StringName &p_name, const Variant &p_default = Variant()) const;
 	MTVIRTUAL void get_meta_list(List<StringName> *p_list) const;
+	MTVIRTUAL void merge_meta_from(const Object *p_src);
 
 #ifdef TOOLS_ENABLED
 	void set_edited(bool p_edited);

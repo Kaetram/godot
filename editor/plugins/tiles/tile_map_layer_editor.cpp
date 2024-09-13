@@ -86,8 +86,7 @@ void TileMapLayerEditorTilesPlugin::_update_toolbar() {
 		transform_toolbar->show();
 		tools_settings_vsep_2->show();
 		random_tile_toggle->show();
-		scatter_label->show();
-		scatter_spinbox->show();
+		scatter_controls_container->set_visible(random_tile_toggle->is_pressed());
 	} else {
 		tools_settings_vsep->show();
 		picker_button->show();
@@ -96,8 +95,7 @@ void TileMapLayerEditorTilesPlugin::_update_toolbar() {
 		tools_settings_vsep_2->show();
 		bucket_contiguous_checkbox->show();
 		random_tile_toggle->show();
-		scatter_label->show();
-		scatter_spinbox->show();
+		scatter_controls_container->set_visible(random_tile_toggle->is_pressed());
 	}
 }
 
@@ -1366,10 +1364,12 @@ void TileMapLayerEditorTilesPlugin::_stop_dragging() {
 				Vector2i coords;
 				HashMap<Vector2i, TileMapCell> cells_undo;
 				for (int i = 0; i < selection_used_cells.size(); i++) {
-					coords = tile_set->map_pattern(top_left, selection_used_cells[i], selection_pattern);
-					cells_undo[coords] = TileMapCell(drag_modified[coords].source_id, drag_modified[coords].get_atlas_coords(), drag_modified[coords].alternative_tile);
 					coords = tile_set->map_pattern(top_left + offset, selection_used_cells[i], selection_pattern);
 					cells_undo[coords] = TileMapCell(edited_layer->get_cell_source_id(coords), edited_layer->get_cell_atlas_coords(coords), edited_layer->get_cell_alternative_tile(coords));
+				}
+				for (int i = 0; i < selection_used_cells.size(); i++) {
+					coords = tile_set->map_pattern(top_left, selection_used_cells[i], selection_pattern);
+					cells_undo[coords] = TileMapCell(drag_modified[coords].source_id, drag_modified[coords].get_atlas_coords(), drag_modified[coords].alternative_tile);
 				}
 
 				// Build the list of cells to do.

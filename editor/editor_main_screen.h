@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  translation.compat.inc                                                */
+/*  editor_main_screen.h                                                  */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,14 +28,64 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#ifndef DISABLE_DEPRECATED
+#ifndef EDITOR_MAIN_SCREEN_H
+#define EDITOR_MAIN_SCREEN_H
 
-void Translation::_bind_compatibility_methods() {
-	ClassDB::bind_compatibility_method(D_METHOD("add_message", "src_message", "xlated_message", "context"), &Translation::add_message, DEFVAL(""));
-	ClassDB::bind_compatibility_method(D_METHOD("add_plural_message", "src_message", "xlated_messages", "context"), &Translation::add_plural_message, DEFVAL(""));
-	ClassDB::bind_compatibility_method(D_METHOD("get_message", "src_message", "context"), &Translation::get_message, DEFVAL(""));
-	ClassDB::bind_compatibility_method(D_METHOD("get_plural_message", "src_message", "src_plural_message", "n", "context"), &Translation::get_plural_message, DEFVAL(""));
-	ClassDB::bind_compatibility_method(D_METHOD("erase_message", "src_message", "context"), &Translation::erase_message, DEFVAL(""));
-}
+#include "scene/gui/panel_container.h"
 
-#endif
+class Button;
+class ConfigFile;
+class EditorPlugin;
+class HBoxContainer;
+class VBoxContainer;
+
+class EditorMainScreen : public PanelContainer {
+	GDCLASS(EditorMainScreen, PanelContainer);
+
+public:
+	enum EditorTable {
+		EDITOR_2D = 0,
+		EDITOR_3D,
+		EDITOR_SCRIPT,
+		EDITOR_ASSETLIB,
+	};
+
+private:
+	VBoxContainer *main_screen_vbox = nullptr;
+	EditorPlugin *selected_plugin = nullptr;
+
+	HBoxContainer *button_hb = nullptr;
+	Vector<Button *> buttons;
+	Vector<EditorPlugin *> editor_table;
+
+	int _get_current_main_editor() const;
+
+protected:
+	void _notification(int p_what);
+
+public:
+	void set_button_container(HBoxContainer *p_button_hb);
+
+	void save_layout_to_config(Ref<ConfigFile> p_config_file, const String &p_section) const;
+	void load_layout_from_config(Ref<ConfigFile> p_config_file, const String &p_section);
+
+	void set_button_enabled(int p_index, bool p_enabled);
+	bool is_button_enabled(int p_index) const;
+
+	void select_next();
+	void select_prev();
+	void select_by_name(const String &p_name);
+	void select(int p_index);
+	int get_selected_index() const;
+	int get_plugin_index(EditorPlugin *p_editor) const;
+	EditorPlugin *get_selected_plugin() const;
+
+	VBoxContainer *get_control() const;
+
+	void add_main_plugin(EditorPlugin *p_editor);
+	void remove_main_plugin(EditorPlugin *p_editor);
+
+	EditorMainScreen();
+};
+
+#endif // EDITOR_MAIN_SCREEN_H

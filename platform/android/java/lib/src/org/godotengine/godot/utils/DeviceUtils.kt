@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  translation_server.compat.inc                                         */
+/*  DeviceUtils.kt                                                        */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,11 +28,25 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#ifndef DISABLE_DEPRECATED
+/**
+ * Contains utility methods for detecting specific devices.
+ */
+@file:JvmName("DeviceUtils")
 
-void TranslationServer::_bind_compatibility_methods() {
-	ClassDB::bind_compatibility_method(D_METHOD("translate", "message", "context"), &TranslationServer::translate, DEFVAL(""));
-	ClassDB::bind_compatibility_method(D_METHOD("translate_plural", "message", "plural_message", "n", "context"), &TranslationServer::translate_plural, DEFVAL(""));
+package org.godotengine.godot.utils
+
+import android.os.Build
+
+/**
+ * Returns true if running on Meta's Horizon OS.
+ */
+fun isHorizonOSDevice(): Boolean {
+	return "Oculus".equals(Build.BRAND, true)
 }
 
-#endif
+/**
+ * Returns true if running on a native Android XR device.
+ */
+fun isNativeXRDevice(): Boolean {
+	return isHorizonOSDevice()
+}

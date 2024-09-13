@@ -48,6 +48,7 @@
 #include "tests/core/io/test_image.h"
 #include "tests/core/io/test_ip.h"
 #include "tests/core/io/test_json.h"
+#include "tests/core/io/test_json_native.h"
 #include "tests/core/io/test_marshalls.h"
 #include "tests/core/io/test_pck_packer.h"
 #include "tests/core/io/test_resource.h"
@@ -118,6 +119,7 @@
 #include "tests/scene/test_node.h"
 #include "tests/scene/test_node_2d.h"
 #include "tests/scene/test_packed_scene.h"
+#include "tests/scene/test_parallax_2d.h"
 #include "tests/scene/test_path_2d.h"
 #include "tests/scene/test_path_follow_2d.h"
 #include "tests/scene/test_sprite_frames.h"
@@ -154,6 +156,7 @@
 
 #include "tests/scene/test_arraymesh.h"
 #include "tests/scene/test_camera_3d.h"
+#include "tests/scene/test_height_map_shape_3d.h"
 #include "tests/scene/test_path_3d.h"
 #include "tests/scene/test_path_follow_3d.h"
 #include "tests/scene/test_primitives.h"
@@ -319,7 +322,7 @@ struct GodotTestCaseListener : public doctest::IReporter {
 			return;
 		}
 
-		if (name.contains("Audio")) {
+		if (name.contains("[Audio]")) {
 			// The last driver index should always be the dummy driver.
 			int dummy_idx = AudioDriverManager::get_driver_count() - 1;
 			AudioDriverManager::initialize(dummy_idx);

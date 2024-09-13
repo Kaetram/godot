@@ -37,6 +37,7 @@
 #include "core/math/projection.h"
 #include "core/os/keyboard.h"
 #include "editor/debugger/editor_debugger_node.h"
+#include "editor/editor_main_screen.h"
 #include "editor/editor_node.h"
 #include "editor/editor_settings.h"
 #include "editor/editor_string_names.h"
@@ -810,7 +811,7 @@ ObjectID Node3DEditorViewport::_select_ray(const Point2 &p_pos) const {
 	Vector<Node3D *> nodes_with_gizmos = Node3DEditor::get_singleton()->gizmo_bvh_ray_query(pos, pos + ray * camera->get_far());
 
 	for (Node3D *spat : nodes_with_gizmos) {
-		if (!spat) {
+		if (!spat || _is_node_locked(spat)) {
 			continue;
 		}
 
@@ -1557,7 +1558,7 @@ void Node3DEditorViewport::_surface_focus_exit() {
 	view_menu->set_disable_shortcuts(true);
 }
 
-bool Node3DEditorViewport ::_is_node_locked(const Node *p_node) {
+bool Node3DEditorViewport::_is_node_locked(const Node *p_node) const {
 	return p_node->get_meta("_edit_lock_", false);
 }
 
@@ -1935,11 +1936,7 @@ void Node3DEditorViewport::_sinput(const Ref<InputEvent> &p_event) {
 
 					if (after != EditorPlugin::AFTER_GUI_INPUT_CUSTOM) {
 						// Single item selection.
-						Vector<_RayResult> selection;
-						_find_items_at_pos(b->get_position(), selection, false);
-						if (!selection.is_empty()) {
-							clicked = selection[0].item->get_instance_id();
-						}
+						clicked = _select_ray(b->get_position());
 
 						selection_in_progress = true;
 
@@ -1975,7 +1972,7 @@ void Node3DEditorViewport::_sinput(const Ref<InputEvent> &p_event) {
 						}
 					}
 
-					if (_edit.mode != TRANSFORM_NONE) {
+					if (!_edit.instant && _edit.mode != TRANSFORM_NONE) {
 						Node3D *selected = spatial_editor->get_single_selected_node();
 						Node3DEditorSelectedItem *se = selected ? editor_selection->get_node_editor_data<Node3DEditorSelectedItem>(selected) : nullptr;
 
@@ -2399,15 +2396,30 @@ void Node3DEditorViewport::_sinput(const Ref<InputEvent> &p_event) {
 		if (ED_IS_SHORTCUT("spatial_editor/cancel_transform", p_event) && _edit.mode != TRANSFORM_NONE) {
 			cancel_transform();
 		}
-		if (!is_freelook_active()) {
-			if (ED_IS_SHORTCUT("spatial_editor/instant_translate", p_event)) {
-				begin_transform(TRANSFORM_TRANSLATE, true);
+		if (!is_freelook_active() && !k->is_echo()) {
+			if (ED_IS_SHORTCUT("spatial_editor/instant_translate", p_event) && _edit.mode != TRANSFORM_TRANSLATE) {
+				if (_edit.mode == TRANSFORM_NONE) {
+					begin_transform(TRANSFORM_TRANSLATE, true);
+				} else if (_edit.instant) {
+					commit_transform();
+					begin_transform(TRANSFORM_TRANSLATE, true);
+				}
 			}
-			if (ED_IS_SHORTCUT("spatial_editor/instant_rotate", p_event)) {
-				begin_transform(TRANSFORM_ROTATE, true);
+			if (ED_IS_SHORTCUT("spatial_editor/instant_rotate", p_event) && _edit.mode != TRANSFORM_ROTATE) {
+				if (_edit.mode == TRANSFORM_NONE) {
+					begin_transform(TRANSFORM_ROTATE, true);
+				} else if (_edit.instant) {
+					commit_transform();
+					begin_transform(TRANSFORM_ROTATE, true);
+				}
 			}
-			if (ED_IS_SHORTCUT("spatial_editor/instant_scale", p_event)) {
-				begin_transform(TRANSFORM_SCALE, true);
+			if (ED_IS_SHORTCUT("spatial_editor/instant_scale", p_event) && _edit.mode != TRANSFORM_SCALE) {
+				if (_edit.mode == TRANSFORM_NONE) {
+					begin_transform(TRANSFORM_SCALE, true);
+				} else if (_edit.instant) {
+					commit_transform();
+					begin_transform(TRANSFORM_SCALE, true);
+				}
 			}
 		}
 
@@ -3077,8 +3089,11 @@ void Node3DEditorViewport::_notification(int p_what) {
 			update_preview_node = false;
 		} break;
 
+		case NOTIFICATION_APPLICATION_FOCUS_OUT:
 		case NOTIFICATION_WM_WINDOW_FOCUS_OUT: {
 			set_freelook_active(false);
+			cursor.region_select = false;
+			surface->queue_redraw();
 		} break;
 
 		case NOTIFICATION_ENTER_TREE: {
@@ -4506,8 +4521,8 @@ bool Node3DEditorViewport::_create_instance(Node *p_parent, const String &p_path
 
 	Node *instantiated_scene = nullptr;
 
-	if (mesh != nullptr || scene != nullptr) {
-		if (mesh != nullptr) {
+	if (mesh.is_valid() || scene.is_valid()) {
+		if (mesh.is_valid()) {
 			MeshInstance3D *mesh_instance = memnew(MeshInstance3D);
 			mesh_instance->set_mesh(mesh);
 
@@ -4538,7 +4553,7 @@ bool Node3DEditorViewport::_create_instance(Node *p_parent, const String &p_path
 		}
 	}
 
-	if (scene != nullptr) {
+	if (scene.is_valid()) {
 		instantiated_scene->set_scene_file_path(ProjectSettings::get_singleton()->localize_path(p_path));
 	}
 
@@ -5462,7 +5477,8 @@ Node3DEditorViewport::Node3DEditorViewport(Node3DEditor *p_spatial_editor, int p
 
 	preview_camera = memnew(CheckBox);
 	preview_camera->set_text(TTR("Preview"));
-	preview_camera->set_shortcut(ED_SHORTCUT("spatial_editor/toggle_camera_preview", TTR("Toggle Camera Preview"), KeyModifierMask::CMD_OR_CTRL | Key::P));
+	// Using Control even on macOS to avoid conflict with Quick Open shortcut.
+	preview_camera->set_shortcut(ED_SHORTCUT("spatial_editor/toggle_camera_preview", TTR("Toggle Camera Preview"), KeyModifierMask::CTRL | Key::P));
 	vbox->add_child(preview_camera);
 	preview_camera->set_h_size_flags(0);
 	preview_camera->hide();
@@ -7846,6 +7862,9 @@ void Node3DEditor::_sun_environ_settings_pressed() {
 	sun_environ_popup->set_position(pos - Vector2(sun_environ_popup->get_contents_minimum_size().width / 2, 0));
 	sun_environ_popup->reset_size();
 	sun_environ_popup->popup();
+	// Grabbing the focus is required for Shift modifier checking to be functional
+	// (when the Add sun/environment buttons are pressed).
+	sun_environ_popup->grab_focus();
 }
 
 void Node3DEditor::_add_sun_to_scene(bool p_already_added_environment) {
@@ -9291,7 +9310,7 @@ struct _GizmoPluginNameComparator {
 };
 
 void Node3DEditor::add_gizmo_plugin(Ref<EditorNode3DGizmoPlugin> p_plugin) {
-	ERR_FAIL_NULL(p_plugin.ptr());
+	ERR_FAIL_COND(p_plugin.is_null());
 
 	gizmo_plugins_by_priority.push_back(p_plugin);
 	gizmo_plugins_by_priority.sort_custom<_GizmoPluginPriorityComparator>();
@@ -9354,7 +9373,7 @@ Vector<Node3D *> Node3DEditor::gizmo_bvh_frustum_query(const Vector<Plane> &p_fr
 Node3DEditorPlugin::Node3DEditorPlugin() {
 	spatial_editor = memnew(Node3DEditor);
 	spatial_editor->set_v_size_flags(Control::SIZE_EXPAND_FILL);
-	EditorNode::get_singleton()->get_main_screen_control()->add_child(spatial_editor);
+	EditorNode::get_singleton()->get_editor_main_screen()->get_control()->add_child(spatial_editor);
 
 	spatial_editor->hide();
 }

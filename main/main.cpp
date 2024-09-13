@@ -140,6 +140,7 @@ static Engine *engine = nullptr;
 static ProjectSettings *globals = nullptr;
 static Input *input = nullptr;
 static InputMap *input_map = nullptr;
+static WorkerThreadPool *worker_thread_pool = nullptr;
 static TranslationServer *translation_server = nullptr;
 static Performance *performance = nullptr;
 static PackedData *packed_data = nullptr;
@@ -690,6 +691,8 @@ Error Main::test_setup() {
 
 	register_core_settings(); // Here globals are present.
 
+	worker_thread_pool = memnew(WorkerThreadPool);
+
 	translation_server = memnew(TranslationServer);
 	tsman = memnew(TextServerManager);
 
@@ -800,6 +803,8 @@ void Main::test_cleanup() {
 	ResourceSaver::remove_custom_savers();
 	PropertyListHelper::clear_base_helpers();
 
+	WorkerThreadPool::get_singleton()->finish();
+
 #ifdef TOOLS_ENABLED
 	GDExtensionManager::get_singleton()->deinitialize_extensions(GDExtension::INITIALIZATION_LEVEL_EDITOR);
 	uninitialize_modules(MODULE_INITIALIZATION_LEVEL_EDITOR);
@@ -840,6 +845,9 @@ void Main::test_cleanup() {
 #endif // _3D_DISABLED
 	if (physics_server_2d_manager) {
 		memdelete(physics_server_2d_manager);
+	}
+	if (worker_thread_pool) {
+		memdelete(worker_thread_pool);
 	}
 	if (globals) {
 		memdelete(globals);
@@ -931,6 +939,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 
 	register_core_settings(); //here globals are present
 
+	worker_thread_pool = memnew(WorkerThreadPool);
 	translation_server = memnew(TranslationServer);
 	performance = memnew(Performance);
 	GDREGISTER_CLASS(Performance);
@@ -1037,7 +1046,8 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		if (arg == "--audio-driver" ||
 				arg == "--display-driver" ||
 				arg == "--rendering-method" ||
-				arg == "--rendering-driver") {
+				arg == "--rendering-driver" ||
+				arg == "--xr-mode") {
 			if (N) {
 				forwardable_cli_arguments[CLI_SCOPE_TOOL].push_back(arg);
 				forwardable_cli_arguments[CLI_SCOPE_TOOL].push_back(N->get());
@@ -2327,14 +2337,11 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		}
 	}
 
-	// note this is the desired rendering driver, it doesn't mean we will get it.
-	// TODO - make sure this is updated in the case of fallbacks, so that the user interface
-	// shows the correct driver string.
-	OS::get_singleton()->set_current_rendering_driver_name(rendering_driver);
-	OS::get_singleton()->set_current_rendering_method(rendering_method);
-
 	// always convert to lower case for consistency in the code
 	rendering_driver = rendering_driver.to_lower();
+
+	OS::get_singleton()->set_current_rendering_driver_name(rendering_driver);
+	OS::get_singleton()->set_current_rendering_method(rendering_method);
 
 	if (use_custom_res) {
 		if (!force_res) {
@@ -2622,6 +2629,10 @@ error:
 	if (translation_server) {
 		memdelete(translation_server);
 	}
+	if (worker_thread_pool) {
+		worker_thread_pool->finish();
+		memdelete(worker_thread_pool);
+	}
 	if (globals) {
 		memdelete(globals);
 	}
@@ -2906,6 +2917,8 @@ Error Main::setup2(bool p_show_boot_logo) {
 		Error err;
 		display_server = DisplayServer::create(display_driver_idx, rendering_driver, window_mode, window_vsync_mode, window_flags, window_position, window_size, init_screen, context, err);
 		if (err != OK || display_server == nullptr) {
+			String last_name = DisplayServer::get_create_function_name(display_driver_idx);
+
 			// We can't use this display server, try other ones as fallback.
 			// Skip headless (always last registered) because that's not what users
 			// would expect if they didn't request it explicitly.
@@ -2913,6 +2926,9 @@ Error Main::setup2(bool p_show_boot_logo) {
 				if (i == display_driver_idx) {
 					continue; // Don't try the same twice.
 				}
+				String name = DisplayServer::get_create_function_name(i);
+				WARN_PRINT(vformat("Display driver %s failed, falling back to %s.", last_name, name));
+
 				display_server = DisplayServer::create(i, rendering_driver, window_mode, window_vsync_mode, window_flags, window_position, window_size, init_screen, context, err);
 				if (err == OK && display_server != nullptr) {
 					break;
@@ -3546,13 +3562,16 @@ int Main::start() {
 				gdscript_docs_path = E->next()->get();
 #endif
 			} else if (E->get() == "--export-release") {
+				ERR_FAIL_COND_V_MSG(!editor && !found_project, EXIT_FAILURE, "Please provide a valid project path when exporting, aborting.");
 				editor = true; //needs editor
 				_export_preset = E->next()->get();
 			} else if (E->get() == "--export-debug") {
+				ERR_FAIL_COND_V_MSG(!editor && !found_project, EXIT_FAILURE, "Please provide a valid project path when exporting, aborting.");
 				editor = true; //needs editor
 				_export_preset = E->next()->get();
 				export_debug = true;
 			} else if (E->get() == "--export-pack") {
+				ERR_FAIL_COND_V_MSG(!editor && !found_project, EXIT_FAILURE, "Please provide a valid project path when exporting, aborting.");
 				editor = true;
 				_export_preset = E->next()->get();
 				export_pack_only = true;
@@ -3564,6 +3583,8 @@ int Main::start() {
 			if (parsed_pair) {
 				E = E->next();
 			}
+		} else if (E->get().begins_with("--export-")) {
+			ERR_FAIL_V_MSG(EXIT_FAILURE, "Missing export preset name, aborting.");
 		}
 #ifdef TOOLS_ENABLED
 		// Handle case where no path is given to --doctool.
@@ -4407,7 +4428,7 @@ bool Main::iteration() {
 	}
 
 #ifdef TOOLS_ENABLED
-	if (wait_for_import && EditorFileSystem::get_singleton()->doing_first_scan()) {
+	if (wait_for_import && EditorFileSystem::get_singleton() && EditorFileSystem::get_singleton()->doing_first_scan()) {
 		exit = false;
 	}
 #endif
@@ -4492,6 +4513,8 @@ void Main::cleanup(bool p_force) {
 
 	ResourceLoader::clear_translation_remaps();
 	ResourceLoader::clear_path_remaps();
+
+	WorkerThreadPool::get_singleton()->finish();
 
 	ScriptServer::finish_languages();
 
@@ -4582,6 +4605,9 @@ void Main::cleanup(bool p_force) {
 #endif // _3D_DISABLED
 	if (physics_server_2d_manager) {
 		memdelete(physics_server_2d_manager);
+	}
+	if (worker_thread_pool) {
+		memdelete(worker_thread_pool);
 	}
 	if (globals) {
 		memdelete(globals);
