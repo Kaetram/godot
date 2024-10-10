@@ -5,6 +5,8 @@
 /*                             GODOT ENGINE                               */
 /*                        https://godotengine.org                         */
 /**************************************************************************/
+/* Copyright (c) 2024-present Redot Engine contributors                   */
+/*                                          (see REDOT_AUTHORS.md)        */
 /* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
 /* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
 /*                                                                        */
@@ -600,7 +602,7 @@ void RenderingDeviceCommons::get_compressed_image_format_block_dimensions(DataFo
 	}
 }
 
-uint32_t RenderingDeviceCommons::get_compressed_image_format_block_byte_size(DataFormat p_format) {
+uint32_t RenderingDeviceCommons::get_compressed_image_format_block_byte_size(DataFormat p_format) const {
 	switch (p_format) {
 		case DATA_FORMAT_BC1_RGB_UNORM_BLOCK:
 		case DATA_FORMAT_BC1_RGB_SRGB_BLOCK:

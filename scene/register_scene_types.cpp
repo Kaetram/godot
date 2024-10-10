@@ -5,6 +5,8 @@
 /*                             GODOT ENGINE                               */
 /*                        https://godotengine.org                         */
 /**************************************************************************/
+/* Copyright (c) 2024-present Redot Engine contributors                   */
+/*                                          (see REDOT_AUTHORS.md)        */
 /* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
 /* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
 /*                                                                        */
@@ -883,7 +885,6 @@ void register_scene_types() {
 	GDREGISTER_CLASS(ProceduralSkyMaterial);
 	GDREGISTER_CLASS(PanoramaSkyMaterial);
 	GDREGISTER_CLASS(PhysicalSkyMaterial);
-	SceneTree::add_idle_callback(BaseMaterial3D::flush_changes);
 	BaseMaterial3D::init_shaders();
 
 	GDREGISTER_CLASS(MeshLibrary);

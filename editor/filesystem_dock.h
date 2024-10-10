@@ -5,6 +5,8 @@
 /*                             GODOT ENGINE                               */
 /*                        https://godotengine.org                         */
 /**************************************************************************/
+/* Copyright (c) 2024-present Redot Engine contributors                   */
+/*                                          (see REDOT_AUTHORS.md)        */
 /* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
 /* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
 /*                                                                        */
@@ -183,8 +185,6 @@ private:
 	DependencyRemoveDialog *remove_dialog = nullptr;
 
 	EditorDirDialog *move_dialog = nullptr;
-	ConfirmationDialog *duplicate_dialog = nullptr;
-	LineEdit *duplicate_dialog_text = nullptr;
 	DirectoryCreateDialog *make_dir_dialog = nullptr;
 
 	ConfirmationDialog *overwrite_dialog = nullptr;
@@ -291,7 +291,7 @@ private:
 	void _resource_created();
 	void _make_scene_confirm();
 	void _rename_operation_confirm();
-	void _duplicate_operation_confirm();
+	void _duplicate_operation_confirm(const String &p_path);
 	void _overwrite_dialog_action(bool p_overwrite);
 	void _convert_dialog_action();
 	Vector<String> _check_existing();
@@ -384,6 +384,7 @@ public:
 	void navigate_to_path(const String &p_path);
 	void focus_on_path();
 	void focus_on_filter();
+	void create_directory(const String &p_path, const String &p_base_dir);
 
 	ScriptCreateDialog *get_script_create_dialog() const;
 

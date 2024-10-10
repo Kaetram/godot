@@ -5,6 +5,8 @@
 /*                             GODOT ENGINE                               */
 /*                        https://godotengine.org                         */
 /**************************************************************************/
+/* Copyright (c) 2024-present Redot Engine contributors                   */
+/*                                          (see REDOT_AUTHORS.md)        */
 /* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
 /* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
 /*                                                                        */
@@ -777,7 +779,7 @@ void AnimationPlayer::_stop_internal(bool p_reset, bool p_keep_state) {
 	_clear_caches();
 	Playback &c = playback;
 	// c.blend.clear();
-	double start = get_section_start_time();
+	double start = c.current.from ? get_section_start_time() : 0;
 	if (p_reset) {
 		c.blend.clear();
 		if (p_keep_state) {

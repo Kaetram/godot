@@ -5,6 +5,8 @@
 /*                             GODOT ENGINE                               */
 /*                        https://godotengine.org                         */
 /**************************************************************************/
+/* Copyright (c) 2024-present Redot Engine contributors                   */
+/*                                          (see REDOT_AUTHORS.md)        */
 /* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
 /* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
 /*                                                                        */
@@ -52,7 +54,10 @@ public:
 	};
 
 private:
-	RID shader;
+	mutable RID shader_rid;
+	mutable String preprocessed_code;
+	mutable Mutex shader_rid_mutex;
+
 	Mode mode = MODE_SPATIAL;
 	HashSet<Ref<ShaderInclude>> include_dependencies;
 	String code;
@@ -60,6 +65,7 @@ private:
 
 	HashMap<StringName, HashMap<int, Ref<Texture>>> default_textures;
 
+	void _check_shader_rid() const;
 	void _dependency_changed();
 	void _recompile();
 	virtual void _update_shader() const; //used for visual shader

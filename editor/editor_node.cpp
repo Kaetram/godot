@@ -5,6 +5,8 @@
 /*                             GODOT ENGINE                               */
 /*                        https://godotengine.org                         */
 /**************************************************************************/
+/* Copyright (c) 2024-present Redot Engine contributors                   */
+/*                                          (see REDOT_AUTHORS.md)        */
 /* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
 /* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
 /*                                                                        */
@@ -1494,7 +1496,7 @@ void EditorNode::_dialog_display_load_error(String p_file, Error p_error) {
 				show_accept(vformat(TTR("Missing file '%s' or one of its dependencies."), p_file.get_file()), TTR("OK"));
 			} break;
 			case ERR_FILE_UNRECOGNIZED: {
-				show_accept(vformat(TTR("File '%s' is saved in a format that is newer than the formats supported by this version of Godot, so it can't be opened."), p_file.get_file()), TTR("OK"));
+				show_accept(vformat(TTR("File '%s' is saved in a format that is newer than the formats supported by this version of Redot, so it can't be opened."), p_file.get_file()), TTR("OK"));
 			} break;
 			default: {
 				show_accept(vformat(TTR("Error while loading file '%s'."), p_file.get_file()), TTR("OK"));
@@ -1983,7 +1985,7 @@ void EditorNode::try_autosave() {
 	editor_data.save_editor_external_data();
 }
 
-void EditorNode::restart_editor() {
+void EditorNode::restart_editor(bool p_goto_project_manager) {
 	exiting = true;
 
 	if (project_run_bar->is_playing()) {
@@ -1991,22 +1993,25 @@ void EditorNode::restart_editor() {
 	}
 
 	String to_reopen;
-	if (get_tree()->get_edited_scene_root()) {
+	if (!p_goto_project_manager && get_tree()->get_edited_scene_root()) {
 		to_reopen = get_tree()->get_edited_scene_root()->get_scene_file_path();
 	}
 
 	_exit_editor(EXIT_SUCCESS);
 
 	List<String> args;
-
 	for (const String &a : Main::get_forwardable_cli_arguments(Main::CLI_SCOPE_TOOL)) {
 		args.push_back(a);
 	}
 
-	args.push_back("--path");
-	args.push_back(ProjectSettings::get_singleton()->get_resource_path());
+	if (p_goto_project_manager) {
+		args.push_back("--project-manager");
+	} else {
+		args.push_back("--path");
+		args.push_back(ProjectSettings::get_singleton()->get_resource_path());
 
-	args.push_back("-e");
+		args.push_back("-e");
+	}
 
 	if (!to_reopen.is_empty()) {
 		args.push_back(to_reopen);
@@ -2387,7 +2392,7 @@ void EditorNode::hide_unused_editors(const Object *p_editing_owner) {
 		// This is to sweep properties that were removed from the inspector.
 		List<ObjectID> to_remove;
 		for (KeyValue<ObjectID, HashSet<EditorPlugin *>> &kv : active_plugins) {
-			const Object *context = ObjectDB::get_instance(kv.key);
+			Object *context = ObjectDB::get_instance(kv.key);
 			if (context) {
 				// In case of self-owning plugins, they are disabled here if they can auto hide.
 				const EditorPlugin *self_owning = Object::cast_to<EditorPlugin>(context);
@@ -2396,7 +2401,7 @@ void EditorNode::hide_unused_editors(const Object *p_editing_owner) {
 				}
 			}
 
-			if (!context) {
+			if (!context || context->call(SNAME("_should_stop_editing"))) {
 				to_remove.push_back(kv.key);
 				for (EditorPlugin *plugin : kv.value) {
 					if (plugin->can_auto_hide()) {
@@ -3137,17 +3142,17 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 			OS::get_singleton()->shell_open("https://forum.godotengine.org/");
 		} break;
 		case HELP_REPORT_A_BUG: {
-			OS::get_singleton()->shell_open("https://github.com/godotengine/godot/issues");
+			OS::get_singleton()->shell_open("https://github.com/Redot-Engine/redot-engine/issues");
 		} break;
 		case HELP_COPY_SYSTEM_INFO: {
 			String info = _get_system_info();
 			DisplayServer::get_singleton()->clipboard_set(info);
 		} break;
 		case HELP_SUGGEST_A_FEATURE: {
-			OS::get_singleton()->shell_open("https://github.com/godotengine/godot-proposals#readme");
+			OS::get_singleton()->shell_open("https://github.com/Redot-Engine/redot-proposals#readme");
 		} break;
 		case HELP_SEND_DOCS_FEEDBACK: {
-			OS::get_singleton()->shell_open("https://github.com/godotengine/godot-docs/issues");
+			OS::get_singleton()->shell_open("https://github.com/Redot-Engine/redot-docs/issues");
 		} break;
 		case HELP_COMMUNITY: {
 			OS::get_singleton()->shell_open("https://godotengine.org/community");
@@ -3402,23 +3407,7 @@ void EditorNode::_discard_changes(const String &p_str) {
 
 		} break;
 		case RUN_PROJECT_MANAGER: {
-			project_run_bar->stop_playing();
-			_exit_editor(EXIT_SUCCESS);
-			String exec = OS::get_singleton()->get_executable_path();
-
-			List<String> args;
-			for (const String &a : Main::get_forwardable_cli_arguments(Main::CLI_SCOPE_TOOL)) {
-				args.push_back(a);
-			}
-
-			String exec_base_dir = exec.get_base_dir();
-			if (!exec_base_dir.is_empty()) {
-				args.push_back("--path");
-				args.push_back(exec_base_dir);
-			}
-			args.push_back("--project-manager");
-
-			OS::get_singleton()->set_restart_on_exit(true, args);
+			restart_editor(true);
 		} break;
 		case RELOAD_CURRENT_PROJECT: {
 			restart_editor();
@@ -4944,7 +4933,7 @@ String EditorNode::_get_system_info() const {
 	}
 	const String distribution_version = OS::get_singleton()->get_version();
 
-	String godot_version = "Godot v" + String(VERSION_FULL_CONFIG);
+	String godot_version = "Redot v" + String(VERSION_FULL_CONFIG);
 	if (String(VERSION_BUILD) != "official") {
 		String hash = String(VERSION_HASH);
 		hash = hash.is_empty() ? String("unknown") : vformat("(%s)", hash.left(9));
@@ -6423,7 +6412,7 @@ bool EditorNode::call_build() {
 
 	for (int i = 0; i < build_callback_count && builds_successful; i++) {
 		if (!build_callbacks[i]()) {
-			ERR_PRINT("A Godot Engine build callback failed.");
+			ERR_PRINT("A Redot Engine build callback failed.");
 			builds_successful = false;
 		}
 	}
@@ -7416,9 +7405,13 @@ EditorNode::EditorNode() {
 	help_menu->add_separator();
 	if (!global_menu || !OS::get_singleton()->has_feature("macos")) {
 		// On macOS  "Quit" and "About" options are in the "app" menu.
-		help_menu->add_icon_shortcut(theme->get_icon(SNAME("Godot"), EditorStringName(EditorIcons)), ED_SHORTCUT_AND_COMMAND("editor/about", TTR("About Godot...")), HELP_ABOUT);
+		help_menu->add_icon_shortcut(theme->get_icon(SNAME("Godot"), EditorStringName(EditorIcons)), ED_SHORTCUT_AND_COMMAND("editor/about", TTR("About Engine...")), HELP_ABOUT);
 	}
-	help_menu->add_icon_shortcut(theme->get_icon(SNAME("Heart"), EditorStringName(EditorIcons)), ED_SHORTCUT_AND_COMMAND("editor/support_development", TTR("Support Godot Development")), HELP_SUPPORT_GODOT_DEVELOPMENT);
+
+	/*
+	TODO: Change to be NOT DONATION focused. Removing for now.
+	help_menu->add_icon_shortcut(theme->get_icon(SNAME("Heart"), EditorStringName(EditorIcons)), ED_SHORTCUT_AND_COMMAND("editor/support_development", TTR("Support Engine Development")), HELP_SUPPORT_GODOT_DEVELOPMENT);
+	*/
 
 	// Spacer to center 2D / 3D / Script buttons.
 	Control *right_spacer = memnew(Control);

@@ -5,6 +5,8 @@
 /*                             GODOT ENGINE                               */
 /*                        https://godotengine.org                         */
 /**************************************************************************/
+/* Copyright (c) 2024-present Redot Engine contributors                   */
+/*                                          (see REDOT_AUTHORS.md)        */
 /* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
 /* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
 /*                                                                        */
@@ -249,11 +251,6 @@ TextureStorage::~TextureStorage() {
 	glDeleteFramebuffers(1, &texture_atlas.framebuffer);
 	texture_atlas.framebuffer = 0;
 	sdf_shader.shader.version_free(sdf_shader.shader_version);
-}
-
-//TODO, move back to storage
-bool TextureStorage::can_create_resources_async() const {
-	return false;
 }
 
 /* Canvas Texture API */

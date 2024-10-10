@@ -5,6 +5,8 @@
 /*                             GODOT ENGINE                               */
 /*                        https://godotengine.org                         */
 /**************************************************************************/
+/* Copyright (c) 2024-present Redot Engine contributors                   */
+/*                                          (see REDOT_AUTHORS.md)        */
 /* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
 /* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
 /*                                                                        */
@@ -328,7 +330,7 @@ abstract class BaseGodotEditor : GodotActivity() {
 		for (runningProcess in runningProcesses) {
 			if (runningProcess.processName == processName) {
 				// Killing process directly
-				Log.v(TAG, "Killing Godot process ${runningProcess.processName}")
+				Log.v(TAG, "Killing Redot process ${runningProcess.processName}")
 				Process.killProcess(runningProcess.pid)
 				return true
 			}

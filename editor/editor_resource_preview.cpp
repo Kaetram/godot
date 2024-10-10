@@ -5,6 +5,8 @@
 /*                             GODOT ENGINE                               */
 /*                        https://godotengine.org                         */
 /**************************************************************************/
+/* Copyright (c) 2024-present Redot Engine contributors                   */
+/*                                          (see REDOT_AUTHORS.md)        */
 /* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
 /* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
 /*                                                                        */
@@ -131,7 +133,7 @@ Variant EditorResourcePreviewGenerator::DrawRequester::_post_semaphore() const {
 }
 
 bool EditorResourcePreview::is_threaded() const {
-	return RSG::texture_storage->can_create_resources_async();
+	return RSG::rasterizer->can_create_resources_async();
 }
 
 void EditorResourcePreview::_thread_func(void *ud) {

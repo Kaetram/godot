@@ -5,6 +5,8 @@
 /*                             GODOT ENGINE                               */
 /*                        https://godotengine.org                         */
 /**************************************************************************/
+/* Copyright (c) 2024-present Redot Engine contributors                   */
+/*                                          (see REDOT_AUTHORS.md)        */
 /* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
 /* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
 /*                                                                        */
@@ -38,7 +40,6 @@ class PipelineCacheRD {
 	SpinLock spin_lock;
 
 	RID shader;
-	uint64_t input_mask;
 
 	RD::RenderPrimitive render_primitive;
 	RD::PipelineRasterizationState rasterization_state;
@@ -92,11 +93,8 @@ public:
 	}
 
 	_FORCE_INLINE_ uint64_t get_vertex_input_mask() {
-		if (input_mask == 0) {
-			ERR_FAIL_COND_V(shader.is_null(), 0);
-			input_mask = RD::get_singleton()->shader_get_vertex_input_attribute_mask(shader);
-		}
-		return input_mask;
+		ERR_FAIL_COND_V(shader.is_null(), 0);
+		return RD::get_singleton()->shader_get_vertex_input_attribute_mask(shader);
 	}
 	void clear();
 	PipelineCacheRD();

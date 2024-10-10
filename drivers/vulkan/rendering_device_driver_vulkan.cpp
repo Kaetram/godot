@@ -5,6 +5,8 @@
 /*                             GODOT ENGINE                               */
 /*                        https://godotengine.org                         */
 /**************************************************************************/
+/* Copyright (c) 2024-present Redot Engine contributors                   */
+/*                                          (see REDOT_AUTHORS.md)        */
 /* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
 /* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
 /*                                                                        */
@@ -566,7 +568,7 @@ Error RenderingDeviceDriverVulkan::_check_device_features() {
 
 	// Check for required features.
 	if (!physical_device_features.imageCubeArray || !physical_device_features.independentBlend) {
-		String error_string = vformat("Your GPU (%s) does not support the following features which are required to use Vulkan-based renderers in Godot:\n\n", context_device.name);
+		String error_string = vformat("Your GPU (%s) does not support the following features which are required to use Vulkan-based renderers in Redot:\n\n", context_device.name);
 		if (!physical_device_features.imageCubeArray) {
 			error_string += "- No support for image cube arrays.\n";
 		}
@@ -731,7 +733,7 @@ Error RenderingDeviceDriverVulkan::_check_device_capabilities() {
 
 		if (use_1_2_features) {
 #ifdef MACOS_ENABLED
-			ERR_FAIL_COND_V_MSG(!device_features_vk_1_2.shaderSampledImageArrayNonUniformIndexing, ERR_CANT_CREATE, "Your GPU doesn't support shaderSampledImageArrayNonUniformIndexing which is required to use the Vulkan-based renderers in Godot.");
+			ERR_FAIL_COND_V_MSG(!device_features_vk_1_2.shaderSampledImageArrayNonUniformIndexing, ERR_CANT_CREATE, "Your GPU doesn't support shaderSampledImageArrayNonUniformIndexing which is required to use the Vulkan-based renderers in Redot.");
 #endif
 			if (enabled_device_extension_names.has(VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME)) {
 				shader_capabilities.shader_float16_is_supported = device_features_vk_1_2.shaderFloat16;
@@ -2523,7 +2525,7 @@ Error RenderingDeviceDriverVulkan::command_queue_execute_and_present(CommandQueu
 
 		// Handling VK_SUBOPTIMAL_KHR the same as VK_SUCCESS is completely intentional.
 		//
-		// Godot does not currently support native rotation in Android when creating the swap chain. It intentionally uses
+		// Redot does not currently support native rotation in Android when creating the swap chain. It intentionally uses
 		// VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR instead of the current transform bits available in the surface capabilities.
 		// Choosing the transform that leads to optimal presentation leads to distortion that makes the application unusable,
 		// as the rotation of all the content is not handled at the moment.
@@ -2864,7 +2866,7 @@ Error RenderingDeviceDriverVulkan::swap_chain_resize(CommandQueueID p_cmd_queue,
 	}
 
 	// Prefer identity transform if it's supported, use the current transform otherwise.
-	// This behavior is intended as Godot does not supported native rotation in platforms that use these bits.
+	// This behavior is intended as Redot does not supported native rotation in platforms that use these bits.
 	// Refer to the comment in command_queue_present() for more details.
 	VkSurfaceTransformFlagBitsKHR surface_transform_bits;
 	if (surface_capabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR) {
@@ -3236,7 +3238,7 @@ Vector<uint8_t> RenderingDeviceDriverVulkan::shader_compile_binary_from_spirv(Ve
 		binptr[0] = 'G';
 		binptr[1] = 'S';
 		binptr[2] = 'B';
-		binptr[3] = 'D'; // Godot Shader Binary Data.
+		binptr[3] = 'D'; // Redot Shader Binary Data.
 		offset += 4;
 		encode_uint32(ShaderBinary::VERSION, binptr + offset);
 		offset += sizeof(uint32_t);
@@ -4102,10 +4104,6 @@ bool RenderingDeviceDriverVulkan::pipeline_cache_create(const Vector<uint8_t> &p
 		cache_info.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
 		cache_info.initialDataSize = pipelines_cache.buffer.size() - sizeof(PipelineCacheHeader);
 		cache_info.pInitialData = pipelines_cache.buffer.ptr() + sizeof(PipelineCacheHeader);
-
-		if (pipeline_cache_control_support) {
-			cache_info.flags = VK_PIPELINE_CACHE_CREATE_EXTERNALLY_SYNCHRONIZED_BIT;
-		}
 
 		VkResult err = vkCreatePipelineCache(vk_device, &cache_info, VKC::get_allocation_callbacks(VK_OBJECT_TYPE_PIPELINE_CACHE), &pipelines_cache.vk_cache);
 		if (err != VK_SUCCESS) {

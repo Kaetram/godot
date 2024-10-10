@@ -5,6 +5,8 @@
 /*                             GODOT ENGINE                               */
 /*                        https://godotengine.org                         */
 /**************************************************************************/
+/* Copyright (c) 2024-present Redot Engine contributors                   */
+/*                                          (see REDOT_AUTHORS.md)        */
 /* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
 /* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
 /*                                                                        */
@@ -281,6 +283,16 @@ uint64_t RenderingServerDefault::get_rendering_info(RenderingInfo p_info) {
 		return RSG::viewport->get_total_primitives_drawn();
 	} else if (p_info == RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME) {
 		return RSG::viewport->get_total_draw_calls_used();
+	} else if (p_info == RENDERING_INFO_PIPELINE_COMPILATIONS_CANVAS) {
+		return RSG::canvas_render->get_pipeline_compilations(PIPELINE_SOURCE_CANVAS);
+	} else if (p_info == RENDERING_INFO_PIPELINE_COMPILATIONS_MESH) {
+		return RSG::canvas_render->get_pipeline_compilations(PIPELINE_SOURCE_MESH) + RSG::scene->get_pipeline_compilations(PIPELINE_SOURCE_MESH);
+	} else if (p_info == RENDERING_INFO_PIPELINE_COMPILATIONS_SURFACE) {
+		return RSG::scene->get_pipeline_compilations(PIPELINE_SOURCE_SURFACE);
+	} else if (p_info == RENDERING_INFO_PIPELINE_COMPILATIONS_DRAW) {
+		return RSG::canvas_render->get_pipeline_compilations(PIPELINE_SOURCE_DRAW) + RSG::scene->get_pipeline_compilations(PIPELINE_SOURCE_DRAW);
+	} else if (p_info == RENDERING_INFO_PIPELINE_COMPILATIONS_SPECIALIZATION) {
+		return RSG::canvas_render->get_pipeline_compilations(PIPELINE_SOURCE_SPECIALIZATION) + RSG::scene->get_pipeline_compilations(PIPELINE_SOURCE_SPECIALIZATION);
 	}
 	return RSG::utilities->get_rendering_info(p_info);
 }

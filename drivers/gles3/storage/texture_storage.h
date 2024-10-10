@@ -5,6 +5,8 @@
 /*                             GODOT ENGINE                               */
 /*                        https://godotengine.org                         */
 /**************************************************************************/
+/* Copyright (c) 2024-present Redot Engine contributors                   */
+/*                                          (see REDOT_AUTHORS.md)        */
 /* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
 /* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
 /*                                                                        */
@@ -504,8 +506,6 @@ public:
 	void texture_2d_initialize_from_texture(RID p_texture, Texture &p_tex) {
 		texture_owner.initialize_rid(p_texture, p_tex);
 	}
-
-	virtual bool can_create_resources_async() const override;
 
 	virtual RID texture_allocate() override;
 	virtual void texture_free(RID p_rid) override;

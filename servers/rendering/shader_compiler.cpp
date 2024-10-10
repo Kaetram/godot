@@ -5,6 +5,8 @@
 /*                             GODOT ENGINE                               */
 /*                        https://godotengine.org                         */
 /**************************************************************************/
+/* Copyright (c) 2024-present Redot Engine contributors                   */
+/*                                          (see REDOT_AUTHORS.md)        */
 /* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
 /* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
 /*                                                                        */
@@ -1354,7 +1356,7 @@ String ShaderCompiler::_dump_node_code(const SL::Node *p_node, int p_level, Gene
 					}
 					code += ")";
 					if (is_screen_texture && !texture_func_returns_data && actions.apply_luminance_multiplier) {
-						code = "(" + code + " * vec4(vec3(sc_luminance_multiplier), 1.0))";
+						code = "(" + code + " * vec4(vec3(sc_luminance_multiplier()), 1.0))";
 					}
 					if (is_normal_roughness_texture && !texture_func_returns_data) {
 						code = "normal_roughness_compatibility(" + code + ")";

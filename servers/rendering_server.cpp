@@ -5,6 +5,8 @@
 /*                             GODOT ENGINE                               */
 /*                        https://godotengine.org                         */
 /**************************************************************************/
+/* Copyright (c) 2024-present Redot Engine contributors                   */
+/*                                          (see REDOT_AUTHORS.md)        */
 /* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
 /* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
 /*                                                                        */
@@ -2144,7 +2146,7 @@ void RenderingServer::fix_surface_compatibility(SurfaceData &p_surface, const St
 	}
 
 	if (warn_on_surface_upgrade) {
-		WARN_PRINT_ONCE_ED("At least one surface uses an old surface format and needs to be upgraded. The upgrade happens automatically at load time every time until the mesh is saved again or re-imported. Once saved (or re-imported), this mesh will be incompatible with earlier versions of Godot.");
+		WARN_PRINT_ONCE_ED("At least one surface uses an old surface format and needs to be upgraded. The upgrade happens automatically at load time every time until the mesh is saved again or re-imported. Once saved (or re-imported), this mesh will be incompatible with earlier versions of Redot.");
 
 		if (!p_path.is_empty()) {
 			WARN_PRINT("A surface of " + p_path + " uses an old surface format and needs to be upgraded.");
@@ -3447,6 +3449,18 @@ void RenderingServer::_bind_methods() {
 	BIND_ENUM_CONSTANT(RENDERING_INFO_TEXTURE_MEM_USED);
 	BIND_ENUM_CONSTANT(RENDERING_INFO_BUFFER_MEM_USED);
 	BIND_ENUM_CONSTANT(RENDERING_INFO_VIDEO_MEM_USED);
+	BIND_ENUM_CONSTANT(RENDERING_INFO_PIPELINE_COMPILATIONS_CANVAS);
+	BIND_ENUM_CONSTANT(RENDERING_INFO_PIPELINE_COMPILATIONS_MESH);
+	BIND_ENUM_CONSTANT(RENDERING_INFO_PIPELINE_COMPILATIONS_SURFACE);
+	BIND_ENUM_CONSTANT(RENDERING_INFO_PIPELINE_COMPILATIONS_DRAW);
+	BIND_ENUM_CONSTANT(RENDERING_INFO_PIPELINE_COMPILATIONS_SPECIALIZATION);
+
+	BIND_ENUM_CONSTANT(PIPELINE_SOURCE_CANVAS);
+	BIND_ENUM_CONSTANT(PIPELINE_SOURCE_MESH);
+	BIND_ENUM_CONSTANT(PIPELINE_SOURCE_SURFACE);
+	BIND_ENUM_CONSTANT(PIPELINE_SOURCE_DRAW);
+	BIND_ENUM_CONSTANT(PIPELINE_SOURCE_SPECIALIZATION);
+	BIND_ENUM_CONSTANT(PIPELINE_SOURCE_MAX);
 
 	ADD_SIGNAL(MethodInfo("frame_pre_draw"));
 	ADD_SIGNAL(MethodInfo("frame_post_draw"));
@@ -3528,7 +3542,7 @@ TypedArray<StringName> RenderingServer::_global_shader_parameter_get_list() cons
 }
 
 void RenderingServer::init() {
-	// These are overrides, even if they are false Godot will still
+	// These are overrides, even if they are false Redot will still
 	// import the texture formats that the host platform needs.
 	// See `const bool can_s3tc_bptc` in the resource importer.
 	GLOBAL_DEF_RST("rendering/textures/vram_compression/import_s3tc_bptc", false);

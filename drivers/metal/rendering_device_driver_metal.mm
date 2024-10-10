@@ -5,6 +5,8 @@
 /*                             GODOT ENGINE                               */
 /*                        https://godotengine.org                         */
 /**************************************************************************/
+/* Copyright (c) 2024-present Redot Engine contributors                   */
+/*                                          (see REDOT_AUTHORS.md)        */
 /* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
 /* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
 /*                                                                        */
@@ -358,7 +360,11 @@ RDD::TextureID RenderingDeviceDriverMetal::texture_create(const TextureFormat &p
 }
 
 RDD::TextureID RenderingDeviceDriverMetal::texture_create_from_extension(uint64_t p_native_texture, TextureType p_type, DataFormat p_format, uint32_t p_array_layers, bool p_depth_stencil) {
-	ERR_FAIL_V_MSG(RDD::TextureID(), "not implemented");
+	id<MTLTexture> obj = (__bridge id<MTLTexture>)(void *)(uintptr_t)p_native_texture;
+
+	// We only need to create a RDD::TextureID for an existing, natively-provided texture.
+
+	return rid::make(obj);
 }
 
 RDD::TextureID RenderingDeviceDriverMetal::texture_create_shared(TextureID p_original_texture, const TextureView &p_view) {
@@ -564,7 +570,7 @@ uint8_t *RenderingDeviceDriverMetal::texture_map(TextureID p_texture, const Text
 		offset += bytes_per_layer * mipExtent.depth * (p_subresource.layer - 1);
 	}
 
-	// TODO: Confirm with rendering team that there is no other way Godot may attempt to map a texture with multiple mipmaps or array layers.
+	// TODO: Confirm with rendering team that there is no other way Redot may attempt to map a texture with multiple mipmaps or array layers.
 
 	// NOTE: It is not possible to create a buffer-backed texture with mipmaps or array layers,
 	//  as noted in the is_valid_linear function, so the offset calculation SHOULD always be zero.
@@ -798,7 +804,7 @@ void RenderingDeviceDriverMetal::fence_free(FenceID p_fence) {
 #pragma mark - Semaphores
 
 RDD::SemaphoreID RenderingDeviceDriverMetal::semaphore_create() {
-	// Metal doesn't use semaphores, as their purpose within Godot is to ensure ordering of command buffer execution.
+	// Metal doesn't use semaphores, as their purpose within Redot is to ensure ordering of command buffer execution.
 	return SemaphoreID(1);
 }
 
@@ -3909,7 +3915,7 @@ Error RenderingDeviceDriverMetal::_create_device() {
 	ERR_FAIL_NULL_V(device_queue, ERR_CANT_CREATE);
 
 	device_scope = [MTLCaptureManager.sharedCaptureManager newCaptureScopeWithCommandQueue:device_queue];
-	device_scope.label = @"Godot Frame";
+	device_scope.label = @"Redot Frame";
 	[device_scope beginScope]; // Allow Xcode to capture the first frame, if desired.
 
 	resource_cache = std::make_unique<MDResourceCache>(this);
@@ -3946,7 +3952,7 @@ Error RenderingDeviceDriverMetal::initialize(uint32_t p_device_index, uint32_t p
 	// Check required features and abort if any of them is missing.
 	if (!metal_device_properties->features.imageCubeArray) {
 		// NOTE: Apple A11 (Apple4) GPUs support image cube arrays, which are devices from 2017 and newer.
-		String error_string = vformat("Your Apple GPU does not support the following features which are required to use Metal-based renderers in Godot:\n\n");
+		String error_string = vformat("Your Apple GPU does not support the following features which are required to use Metal-based renderers in Redot:\n\n");
 		if (!metal_device_properties->features.imageCubeArray) {
 			error_string += "- No support for image cube arrays.\n";
 		}

@@ -5,6 +5,8 @@
 /*                             GODOT ENGINE                               */
 /*                        https://godotengine.org                         */
 /**************************************************************************/
+/* Copyright (c) 2024-present Redot Engine contributors                   */
+/*                                          (see REDOT_AUTHORS.md)        */
 /* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
 /* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
 /*                                                                        */
@@ -54,7 +56,7 @@
 
 #include <algorithm>
 
-// This may one day be used in Godot for interoperability between C arrays, Vector and LocalVector.
+// This may one day be used in Redot for interoperability between C arrays, Vector and LocalVector.
 // (See https://github.com/godotengine/godot-proposals/issues/5144.)
 template <typename T>
 class VectorView {
@@ -104,14 +106,14 @@ struct VersatileResourceTemplate {
 	uint8_t data[MAX_RESOURCE_SIZE];
 
 	template <typename T>
-	static T *allocate(PagedAllocator<VersatileResourceTemplate> &p_allocator) {
+	static T *allocate(PagedAllocator<VersatileResourceTemplate, true> &p_allocator) {
 		T *obj = (T *)p_allocator.alloc();
 		memnew_placement(obj, T);
 		return obj;
 	}
 
 	template <typename T>
-	static void free(PagedAllocator<VersatileResourceTemplate> &p_allocator, T *p_object) {
+	static void free(PagedAllocator<VersatileResourceTemplate, true> &p_allocator, T *p_object) {
 		p_object->~T();
 		p_allocator.free((VersatileResourceTemplate *)p_object);
 	}
